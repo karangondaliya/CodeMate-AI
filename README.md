@@ -164,5 +164,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/karangondaliya">Karan Gondaliya</a>
+  Made with ❤️ by <a href="https://github.com/karangondaliya">Karan Gondaliya</a> <a href="https://github.com/kar1005">Khushi Ruparelia</a> <a href="https://github.com/Vora-Namra">Namra Vora</a> <a href="https://github.com/foramvora20">Foram Vora</a>
 </p>
