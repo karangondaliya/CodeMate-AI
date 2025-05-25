@@ -225,7 +225,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
         }, 1500)
       } else {
         setSubmitStatus("error")
-        setSubmitMessage(response.status)
+        // setSubmitMessage(response.status)
       }
     } catch (error) {
       setSubmitStatus("error")
