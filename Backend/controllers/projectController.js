@@ -1,202 +1,91 @@
-// const Project = require('../models/Project');
-// const axios = require('axios');
-// require('dotenv').config();
-
-// exports.createProject = async (req, res) => {
-//   try {
-//     const { githubUrl, roleInProject, diagramsRequested } = req.body;
-
-//     if (!githubUrl.startsWith('https://github.com')) {
-//       return res.status(400).json({ message: 'Invalid GitHub URL' });
-//     }
-
-//     // Step 1: Clone or fetch repo content (optional for this mock)
-//     // You can use GitHub API to get README or file content if needed
-
-//     // Step 2: Construct prompt
-//     const prompt = `
-// You are an AI engineer helping analyze open-source GitHub projects. 
-// Given this public GitHub URL: ${githubUrl}, and assuming the user is contributing as a ${roleInProject}, 
-// analyze the repository and return the following:
-
-// 1. A concise summary of the project and user's potential contribution.
-// 2. Generate diagram codes (in Mermaid syntax) for:
-//    ${diagramsRequested.join(', ')}
-
-// Respond in the following JSON format:
-// {
-//   "summary": "short project summary",
-//   "diagramCode": {
-//     "class": "mermaid code here...",
-//     "sequence": "...",
-//     "flowchart": "..."
-//   },
-//   "diagramImage": {
-//     "class": "base64 PNG string here...",
-//     "sequence": "...",
-//     "flowchart": "..."
-//   }
-// }
-// `;
-
-//     // Step 3: Call Gemini API
-//     const geminiRes = await axios.post(
-//       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
-//       {
-//         contents: [{
-//           parts: [{ text: prompt }]
-//         }]
-//       },
-//       {
-//         headers: { 'Content-Type': 'application/json' }
-//       }
-//     );
-
-//     // Step 4: Extract response (parsing JSON block from text)
-//     const modelText = geminiRes.data.candidates[0].content.parts[0].text;
-
-//     // Basic JSON block extraction (may vary depending on format)
-//     const match = modelText.match(/```json([\s\S]*?)```/);
-//     const jsonStr = match ? match[1].trim() : modelText;
-//     const parsed = JSON.parse(jsonStr);
-
-//     const { summary, diagramCode, diagramImage } = parsed;
-
-//     const project = await Project.create({
-//       user: req.user.id,
-//       githubUrl,
-//       role,
-//       diagramsRequested,
-//       summary,
-//       diagramCode,
-//       diagramImage,
-//     });
-
-//     res.status(201).json({ message: 'Project created and analyzed', project });
-//   } catch (error) {
-//     console.error('Project creation error:', error.message);
-//     res.status(500).json({ message: 'Failed to create project', error: error.message });
-//   }
-// };
-
-const History = require('../models/History');
-const Project = require('../models/Project');
 const axios = require('axios');
 require('dotenv').config();
+const Project = require('../models/Project');
+
+// All available diagram types
+const ALL_DIAGRAM_TYPES = [
+  "Class Diagram", 
+  "Sequence Diagram", 
+  "ER Diagram", 
+  "Use Case Diagram", 
+];
 
 exports.createProject = async (req, res) => {
   try {
-    const { githubUrl, role, diagrams } = req.body;
+    const { githubUrl, role, requested_diagrams = [], branch } = req.body;
 
-    
+    // Validate input
     if (!githubUrl.startsWith('https://github.com/')) {
       return res.status(400).json({ message: 'Invalid GitHub URL' });
     }
-    if (!Array.isArray(diagrams) || diagrams.length === 0) {
-      return res.status(400).json({ message: 'At least one diagram must be selected' });
-    }
-
     
-        const prompt = `
-        As a senior software engineer analyzing the GitHub repository at ${githubUrl}, 
-        provide for a ${role} contributor:
+    // Use all diagram types regardless of what was requested
+    const allDiagrams = ALL_DIAGRAM_TYPES;
 
-        1. Technical Summary (150-200 words):
-        - Focus on ${role}-specific architecture and components
-        - Highlight key technical patterns and decisions
+    const summarizeUrl = 'http://localhost:8000/summarize';
+    const diagramUrl = 'http://localhost:8000/generate-diagrams';
 
-        2. Mermaid.js Code for: ${diagrams.join(', ')}
+    const [summaryResponse, diagramResponse] = await Promise.all([
+      axios.post(summarizeUrl, { repo_url: githubUrl, branch }),
+      axios.post(diagramUrl, { 
+        repo_url: githubUrl, 
+        branch, 
+        role, 
+        requested_diagrams: allDiagrams // Use ALL diagram types
+      })
+    ]);
+    
+    console.log('Summary Response:', summaryResponse.data);
+    console.log('Diagram Response:', diagramResponse.data);
 
-        Respond with pure JSON (no markdown) using this structure:
-        {
-        "summary": "concise technical summary here",
-        "diagramCodes": {
-            ${diagrams.map(d => `"${d}": "mermaid code"`).join(',\n    ')}
-        }
-        }
-        Ensure valid JSON formatting without any extra text.`;
-
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
-
-        const geminiRes = await axios.post(
-        apiUrl,
-        {
-            contents: [{
-            parts: [{ text: prompt }]
-            }],
-            generationConfig: {  
-            response_mime_type: "application/json"
-            }
-        },
-        {
-            headers: { 'Content-Type': 'application/json' }
-        }
-        );
-
-    const responseText = geminiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!responseText) {
-      throw new Error('Invalid response structure from Gemini API');
+    // Check if the responses have the expected structure
+    if (!summaryResponse.data.summary) {
+      throw new Error('Invalid or missing summary data from FastAPI');
     }
+    
+    if (!diagramResponse.data.diagrams) {
+      throw new Error('Invalid or missing diagram data from FastAPI');
+    }
+    
+    const summaryData = summaryResponse.data.summary;
+    const summary = typeof summaryData === 'string' 
+                    ? summaryData 
+                    : JSON.stringify(summaryData);
+    
+    const diagramsData = diagramResponse.data.diagrams;
+    
+    // Extract just the diagram code values as an array of strings
+    const diagramCodesArray = Object.values(diagramsData).map(code => 
+      typeof code === 'string' ? code : JSON.stringify(code)
+    );
 
-    const cleanResponse = responseText.replace(/```json/g, '').replace(/```/g, '');
-    const { summary, diagramCodes } = JSON.parse(cleanResponse);
-
-    const missingDiagrams = diagrams.filter(d => !diagramCodes[d]);
+    // Check if we're missing any requested diagrams
+    const receivedDiagramNames = Object.keys(diagramsData);
+    const missingDiagrams = allDiagrams.filter(d => !receivedDiagramNames.includes(d));
+    
     if (missingDiagrams.length > 0) {
-      return res.status(400).json({ message: `Missing diagrams: ${missingDiagrams.join(', ')}` });
+      // console.warn(Some requested diagrams were not generated: ${missingDiagrams.join(', ')});
     }
 
-    const diagramImages = [];
-    for (const diagramType of diagrams) {
-      try {
-        const code = diagramCodes[diagramType];
-        const encoded = Buffer.from(code)
-          .toString('base64')
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+$/, '');
-        
-        const { data } = await axios.get(`https://mermaid.ink/img/${encoded}`, {
-          responseType: 'arraybuffer'
-        });
-        
-        diagramImages.push(Buffer.from(data).toString('base64'));
-      } catch (error) {
-        console.error(`Diagram generation failed for ${diagramType}:`, error);
-        return res.status(500).json({ 
-          message: `Failed to generate ${diagramType} diagram: ${error.message}`
-        });
-      }
-    }
-
+    // Create the project with properly formatted data
     const project = await Project.create({
       user: req.user.id,
-      role,
+      role, // Use the role directly as provided
       githubUrl,
-      diagrams,
+      diagrams: allDiagrams, // Store ALL diagram types
       summary,
-      diagramImages
+      diagramCodes: diagramCodesArray // Array of diagram code strings
     });
-
-    await History.create({
-  user: req.user.id,
-  project: project._id,
-  action: 'Created' // or 'Analyzed' if that's more accurate
-  });
-
-
-    const responseData = project.toObject();
-    delete responseData.diagramImages;
 
     res.status(201).json({
       message: 'Project analysis complete',
-      project: responseData
+      project
     });
 
   } catch (error) {
     console.error('Project creation error:', error);
     const statusCode = error.response?.status || 500;
-    res.status(statusCode).json({ 
+    res.status(statusCode).json({
       message: 'Project analysis failed',
       error: error.message,
       ...(process.env.NODE_ENV === 'development' && { details: error.response?.data })
@@ -206,9 +95,28 @@ exports.createProject = async (req, res) => {
 
 exports.getUserProjects = async (req, res) => {
   try {
-    const projects = await Project.find({ user: req.user.id }).sort({ createdAt: -1 }); //-1 is foe recent project
+    const projects = await Project.find({ user: req.user.id }).sort({ createdAt: -1 }); //-1 is for recent project
     res.json(projects);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch project history', error });
+  }
+};
+
+exports.getProjectById = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    const project = await Project.findOne({
+      _id: projectId,
+      user: req.user.id 
+    });
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    res.json(project);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch the project', error });
   }
 };

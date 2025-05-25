@@ -3,9 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { userStorage } from "../utils/userStorage"
 import "./LoginPage.css"
-import { loginUser } from "../api/auth"
 
 // Icons (keeping all existing icons)
 const MailIcon = () => (
@@ -130,9 +128,12 @@ interface FormErrors {
 }
 
 interface LoginPageProps {
-  onLoginSuccess?: () => void
+  onLoginSuccess?: (userData: any) => void
   onGoToRegister?: () => void
 }
+
+// API configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister }) => {
   const [isDark, setIsDark] = useState(false)
@@ -187,6 +188,51 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
     }
   }
 
+  const loginUser = async (email: string, password: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email: email.toLowerCase().trim(), 
+          password 
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed')
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Login successful',
+        user: data.user,
+        token: data.token
+      }
+    } catch (error: any) {
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        return {
+          success: false,
+          message: 'Unable to connect to server. Please check your connection.',
+          user: null,
+          token: null
+        }
+      }
+      
+      return {
+        success: false,
+        message: error.message || 'Network error. Please try again.',
+        user: null,
+        token: null
+      }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -198,18 +244,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
     setSubmitStatus("idle")
 
     try {
-      // Simulate API call delay
-      const response = await loginUser({
-            email: formData.email.trim(),
-            password: formData.password,
-          });
-
-      // Authenticate user using userStorage
+      console.log("Attempting login with:", formData.email)
       
+      const result = await loginUser(formData.email, formData.password)
 
-      if (response.status== 201) {
+      if (result.success) {
         setSubmitStatus("success")
-        setSubmitMessage("Welcome Back:"+response.data.name)
+        setSubmitMessage(result.message)
+
+        // Store authentication token in localStorage
+        if (result.token) {
+          localStorage.setItem('authToken', result.token)
+        }
+
+        // Store user data in localStorage (optional)
+        if (result.user) {
+          localStorage.setItem('userData', JSON.stringify(result.user))
+        }
 
         // Reset form
         setFormData({
@@ -220,14 +271,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
         // Redirect after success
         setTimeout(() => {
           if (onLoginSuccess) {
-            onLoginSuccess()
+            onLoginSuccess(result.user)
           }
         }, 1500)
       } else {
         setSubmitStatus("error")
-        // setSubmitMessage(response.status)
+        setSubmitMessage(result.message)
       }
     } catch (error) {
+      console.error("Login error:", error)
       setSubmitStatus("error")
       setSubmitMessage("Login failed. Please try again later.")
     } finally {
@@ -249,9 +301,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
     }
   }
 
-  // Get all registered users for demo purposes
-  const allUsers = userStorage.getAllUsers()
-
   return (
     <div className="login-page">
       {/* Header */}
@@ -265,7 +314,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
           <motion.div className="header-logo" whileHover={{ scale: 1.05 }}>
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               className="logo-icon"
             >
               <CodeIcon />
@@ -317,7 +366,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
               "radial-gradient(circle at 40% 50%, #06b6d4 0%, transparent 50%)",
             ],
           }}
-          transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY }}
+          transition={{ duration: 10, repeat: Infinity }}
         />
 
         <div className="login-container">
@@ -328,27 +377,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onGoToRegister })
                 Welcome Back to <span className="gradient-text">CodeMate AI</span>
               </h1>
               <p className="login-subtitle">Sign in to your account and continue your AI-powered development journey</p>
-            </motion.div>
-
-            {/* Demo Credentials Info */}
-            <motion.div variants={fadeInUp} className="demo-info">
-              <div className="demo-card">
-                <h3 className="demo-title">Available Test Accounts</h3>
-                <div className="demo-credentials">
-                  {allUsers.map((user, index) => (
-                    <div key={user.id} className="demo-field">
-                      <div className="demo-user-info">
-                        <span className="demo-label">{user.name}</span>
-                        <span className="demo-email">{user.email}</span>
-                      </div>
-                      <span className="demo-value">{user.password}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="demo-note">
-                  Use any of these credentials to test login, or create a new account via registration
-                </p>
-              </div>
             </motion.div>
 
             {/* Login Form */}

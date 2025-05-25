@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import "./ProjectAnalysisPage.css"
+import { addProject } from "../api/auth"
 
 // Icons
 const GithubIcon = () => (
@@ -204,10 +205,23 @@ const ProjectAnalysisPage: React.FC<ProjectAnalysisPageProps> = ({ onAnalysisCom
 
     setIsSubmitting(true)
     setSubmitStatus("idle")
+    setSubmitMessage("")
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Prepare the data to send to the API
+      const projectData = {
+        githubLink: formData.githubLink.trim(),
+        role: formData.role,
+        // Include generateDiagram if your API supports it
+        generateDiagram: formData.generateDiagram
+      }
+
+      console.log("Submitting project data:", projectData)
+
+      // Call the addProject function
+      const response = await addProject(projectData)
+      
+      console.log("API response:", response)
 
       setSubmitStatus("success")
       setSubmitMessage("Analysis started! Redirecting to results...")
@@ -218,9 +232,20 @@ const ProjectAnalysisPage: React.FC<ProjectAnalysisPageProps> = ({ onAnalysisCom
           onAnalysisComplete(formData)
         }
       }, 1500)
+
     } catch (error) {
+      console.error("Error submitting project:", error)
+      
       setSubmitStatus("error")
-      setSubmitMessage("Analysis failed. Please try again.")
+      
+      // Handle different types of errors
+      if (error instanceof Error) {
+        setSubmitMessage(`Analysis failed: ${error.message}`)
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        setSubmitMessage(`Analysis failed: ${(error as any).message}`)
+      } else {
+        setSubmitMessage("Analysis failed. Please check your connection and try again.")
+      }
     } finally {
       setIsSubmitting(false)
     }

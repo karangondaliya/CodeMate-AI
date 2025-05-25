@@ -83,7 +83,7 @@ function App() {
         />
       )}
       {currentPage === "analysis" && (
-        <ProjectAnalysisPage onAnalysisComplete={handleAnalysisComplete} onGoBack={showLanding} />
+        <ProjectAnalysisPage />
       )}
       {currentPage === "results" && analysisData && (
         <AnalysisResultsPage analysisData={analysisData} onGoBack={showLanding} onNewAnalysis={handleNewAnalysis} />
