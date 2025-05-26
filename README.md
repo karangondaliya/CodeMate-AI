@@ -79,6 +79,31 @@ project-root/
     └── main.py              # FastAPI entry point
 ```
 
+## 📸 Screenshots
+
+### 🚀 Landing Page
+![Landing Page](ScreenShot/LandingPage.jpeg)
+
+### ⭐ Feature Highlight
+![Feature Page](ScreenShot/FeaturePage.jpeg)
+
+### 🔐 Sign In Page
+![Sign In Page](ScreenShot/SignInPage.jpeg)
+
+### 📝 Sign Up Page
+![Sign Up Page](ScreenShot/SignUpPage.jpeg)
+
+### 🧠 Project Analysis Page
+![Project Analysis Page](ScreenShot/ProjectAnalysisPage.jpeg)
+
+### 📂 Project History Page
+![Project History Page](ScreenShot/ProjectHistoryPage.jpeg)
+
+### 👤 Profile Page
+![Profile Page](ScreenShot/ProfilePage.jpeg)
+
+
+
 ## 🔄 Workflow
 
 1. User authenticates via the Express backend
