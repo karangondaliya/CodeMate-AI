@@ -44,32 +44,45 @@ export async function loginUser(data: {
   }
 }
 
+const ALL_DIAGRAM_TYPES = [
+  "Class Diagram", 
+  "Sequence Diagram", 
+  "ER Diagram", 
+  "Use Case Diagram", 
+];
+
 export const addProject = async (projectData: {
   githubLink: string;
   role: string;
+  generateDiagram?: boolean;
 }) => {
   try {
-    // Make sure this endpoint exists in your backend
-    const response = await fetch('/api/project/add', {  // or whatever your correct endpoint is
-      method: 'POST',
+    // Restructure the data to match what the backend expects
+    const backendData = {
+      githubUrl: projectData.githubLink, // Change the key name to match backend
+      role: projectData.role,
+      requested_diagrams: projectData.generateDiagram ? ALL_DIAGRAM_TYPES : [] // Add this if needed
+      // branch is not required as it has a default value on the backend
+    };
+
+    const response = await axios.post(`${API_BASE}/project/add`, backendData, {
       headers: {
-        'Content-Type': 'application/json',
-        // Add authentication headers if needed
         'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(projectData),
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error('Error adding project:', error);
     
-    // Re-throw with more specific error message
+    if (axios.isAxiosError(error) && error.response) {
+      const serverErrorMsg = error.response.data?.message || error.response.data?.error;
+      if (serverErrorMsg) {
+        throw new Error(`Server error: ${serverErrorMsg}`);
+      }
+      throw new Error(`Server error (${error.response.status}): ${error.message}`);
+    }
+    
     if (error instanceof Error) {
       throw new Error(`Failed to add project: ${error.message}`);
     }

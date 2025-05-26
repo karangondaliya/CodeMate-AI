@@ -144,10 +144,10 @@ const ProjectAnalysisPage: React.FC<ProjectAnalysisPageProps> = ({ onAnalysisCom
   const [formErrors, setFormErrors] = useState<FormErrors>({})
 
   const roleOptions = [
-    { value: "frontend", label: "Frontend Developer", icon: "🎨" },
-    { value: "backend", label: "Backend Developer", icon: "🔧" },
-    { value: "ai-engineer", label: "AI Engineer", icon: "🤖" },
-    { value: "product-manager", label: "Product Manager", icon: "📊" },
+    { value: "Frontend", label: "Frontend Developer", icon: "🎨" },
+    { value: "Backend", label: "Backend Developer", icon: "🔧" },
+    { value: "AI Engineer", label: "AI Engineer", icon: "🤖" },
+    { value: "Product Manager", label: "Product Manager", icon: "📊" },
   ]
 
   useEffect(() => {
