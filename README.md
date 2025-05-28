@@ -1,8 +1,8 @@
 # CodeMate AI
 
-<!--<p align="center">
-  <img src="https://via.placeholder.com/150?text=CodeMate" alt="CodeMate AI Logo"/>
-</p>-->
+<p align="center">
+  <img src="ScreenShot/CodeMate_logo.jpeg" alt="CodeMate AI Logo"/ width=100px height=100px>
+</p>
 
 <p align="center">
   <b>AI-powered code analysis and software architecture visualization tool</b>
