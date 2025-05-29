@@ -16,11 +16,12 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const updates = {};
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (name) updates.name = name;
     if (email) updates.email = email;
     if (password) updates.password = await bcrypt.hash(password, 10);
+    if (role) updates.role = role; // Add this line to handle role updates
 
     const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });

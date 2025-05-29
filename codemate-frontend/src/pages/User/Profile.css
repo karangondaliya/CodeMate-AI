@@ -1,0 +1,56 @@
+.profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.profile-content {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 2rem;
+}
+
+.success-alert {
+  background-color: #dcfce7;
+  color: #15803d;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.form-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--gray-800);
+}
+
+.section-desc {
+  margin-top: -0.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--gray-500);
+  font-size: 0.9rem;
+}
+
+.field-hint {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .profile-content {
+    padding: 1.5rem;
+  }
+}
