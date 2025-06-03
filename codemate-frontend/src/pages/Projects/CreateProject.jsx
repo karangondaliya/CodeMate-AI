@@ -63,7 +63,7 @@ const CreateProject = () => {
       }
       
       const response = await createProject(formData);
-      navigate(`/projects/${response.project._id}`);
+      navigate(`/projects/${response.project.id}`);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to create project');
     } finally {

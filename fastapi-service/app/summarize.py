@@ -20,6 +20,8 @@ RAG-powered, role-aware GitHub repo summarizer (Groq LLM)
     summary (≤ 300 tokens output).
 """
 
+os.environ['GROQ_API_KEY'] = "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"
+
 # ================== CONFIG ==================
 GROQ_MODEL = "llama3-8b-8192"  # Options: llama3-8b-8192, mixtral-8x7b-32768, gemma-7b-it
 CHUNK_SIZE   = 800   # words-ish per raw chunk
