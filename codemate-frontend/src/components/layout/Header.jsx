@@ -18,18 +18,25 @@ const Header = () => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Fix: Check if the click is outside the dropdown reference element
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Add the event listener only when the dropdown is open
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [dropdownOpen]); // Fix: Add dropdownOpen as a dependency
 
-  const toggleDropdown = () => {
+  const toggleDropdown = (e) => {
+    // Fix: Stop event propagation to prevent immediate close
+    e.stopPropagation();
     setDropdownOpen(!dropdownOpen);
   };
 
@@ -53,7 +60,7 @@ const Header = () => {
               <div className="dropdown-container">
                 <button 
                   className="user-name"
-                  onClick={toggleDropdown}
+                  onClick={toggleDropdown} // Fix: Use toggleDropdown function that stops propagation
                   aria-expanded={dropdownOpen}
                 >
                   {currentUser?.name || 'User'}

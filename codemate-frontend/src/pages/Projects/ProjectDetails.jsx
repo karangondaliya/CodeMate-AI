@@ -10,6 +10,47 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('summary');
+
+  useEffect(() => {
+  const fetchProject = async () => {
+    try {
+      const data = await getProjectById(id);
+      
+      // Fix: Remove duplicate diagrams with different capitalizations
+      if (data.diagrams && data.diagramCodes) {
+        const uniqueDiagrams = [];
+        const uniqueDiagramCodes = [];
+        const seen = new Set();
+        
+        data.diagrams.forEach((diagram, index) => {
+          const normalizedName = diagram.toLowerCase();
+          if (!seen.has(normalizedName)) {
+            seen.add(normalizedName);
+            uniqueDiagrams.push(diagram);
+            uniqueDiagramCodes.push(data.diagramCodes[index]);
+          }
+        });
+        
+        // Update the project data with deduplicated diagrams
+        data.diagrams = uniqueDiagrams;
+        data.diagramCodes = uniqueDiagramCodes;
+      }
+      
+      setProject(data);
+      
+      // Set the first diagram as active if there's no summary
+      if (!data.summary && data.diagrams && data.diagrams.length > 0) {
+        setActiveTab(`diagram-0`);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load project');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchProject();
+}, [id]);
   
   useEffect(() => {
     const fetchProject = async () => {

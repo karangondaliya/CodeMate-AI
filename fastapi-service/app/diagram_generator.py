@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-os.environ['GEMINI_API_KEY'] = "AIzaSyBMB3SQxsuZN07lRLE-sqwn-i2Nw1fJI-0"
+os.environ['GEMINI_API_KEY'] = "AIzaSyBMB3SQxsuZN07lRLE-sqwn-i2Nw1fJI-0"  # Replace with your actual API key
 
 # --- Diagram role mapping ---
 role_to_diagrams = {
@@ -29,12 +29,19 @@ def get_diagrams_for_role(role, requested_diagrams=None):
         raise ValueError(f"Invalid role '{role}'. Valid roles: {list(role_to_diagrams.keys())}")
 
     default_diagrams = role_to_diagrams[role]
+    
     if requested_diagrams:
+        # Normalize the requested diagram names
         requested_diagrams = [d.strip().title() for d in requested_diagrams]
-        all_diagrams = list(set(default_diagrams + requested_diagrams))
+        
+        # Use set to ensure no duplicates
+        all_diagrams = list(dict.fromkeys(default_diagrams + requested_diagrams))
+        
+        # Log additional diagrams for transparency
         extra = [d for d in requested_diagrams if d not in default_diagrams]
         if extra:
             print(f"Note: {extra} are not typical for role '{role}', but will be generated.")
+        
         return all_diagrams
     else:
         return default_diagrams
@@ -74,7 +81,12 @@ def validate_mermaid_syntax(mermaid_code):
         elif mermaid_code.startswith('erDiagram'):
             errors.extend(validate_er_diagram(mermaid_code))
         elif any(mermaid_code.startswith(ft) for ft in ['graph', 'flowchart']):
-            errors.extend(validate_flowchart(mermaid_code))
+            # Check if it's a use case diagram (flowchart)
+            if mermaid_code.find('((') > -1 and mermaid_code.find('))') > -1:
+                # Has actor syntax, likely a use case diagram
+                errors.extend(validate_use_case_flowchart(mermaid_code))
+            else:
+                errors.extend(validate_flowchart(mermaid_code))
         
         # Check for unbalanced brackets/parentheses
         brackets = {'(': ')', '[': ']', '{': '}'}
@@ -94,6 +106,42 @@ def validate_mermaid_syntax(mermaid_code):
         
     except Exception as e:
         return False, [f"Validation error: {str(e)}"]
+
+def validate_use_case_flowchart(code):
+    """Validate use case diagram implemented as flowchart"""
+    errors = []
+    lines = code.split('\n')
+    
+    # These patterns are specific to use case diagrams implemented as flowcharts
+    actor_pattern = r'\w+\(\(.+\)\)'  # Actor node pattern
+    usecase_pattern = r'\w+\[.+\]'    # Use case node pattern
+    connection_pattern = r'\w+\s*-->\s*\w+'  # Connection pattern
+    subgraph_pattern = r'subgraph\s+.+'      # Subgraph pattern
+    
+    has_actor = False
+    has_usecase = False
+    
+    for line_num, line in enumerate(lines[1:], 2):
+        line = line.strip()
+        if not line or line.startswith('%%'):
+            continue
+            
+        if re.match(actor_pattern, line):
+            has_actor = True
+        elif re.match(usecase_pattern, line):
+            has_usecase = True
+        elif not (re.match(connection_pattern, line) or 
+                 re.match(subgraph_pattern, line) or
+                 line in ['end']):
+            errors.append(f"Invalid use case diagram syntax at line {line_num}: {line}")
+    
+    # Check if we have both actors and use cases
+    if not has_actor:
+        errors.append("Use case diagram missing actor nodes ((Actor))")
+    if not has_usecase:
+        errors.append("Use case diagram missing use case nodes [Use Case]")
+    
+    return errors
 
 def validate_class_diagram(code):
     """Validate class diagram specific syntax"""
@@ -206,7 +254,33 @@ def correct_mermaid_syntax(mermaid_code, diagram_type, context):
         
         model = get_gemini_model()
         
-        prompt = f"""
+        # Special prompt for Use Case Diagrams
+        if diagram_type == "Use Case Diagram":
+            prompt = f"""
+You are a Mermaid.js syntax expert. The following Use Case Diagram has syntax errors and needs to be corrected.
+
+RULES:
+1. Output ONLY valid Mermaid.js syntax
+2. Do NOT include markdown backticks (```mermaid)
+3. Ensure proper Use Case Diagram simulation using flowchart syntax:
+   - Use 'flowchart TD' or 'graph TD' for top-down flow
+   - Represent ACTORS with ((Actor)) syntax
+   - Represent USE CASES with [Use Case] syntax
+   - Connect with --> arrows
+   - Group related elements with subgraph
+4. Keep the logical structure and relationships intact
+5. Fix any syntax errors while preserving the diagram's meaning
+
+INVALID DIAGRAM CODE:
+{mermaid_code}
+
+CONTEXT FOR REFERENCE:
+{context[:2000]}
+
+Please provide the corrected Mermaid syntax:
+"""
+        else:
+            prompt = f"""
 You are a Mermaid.js syntax expert. The following {diagram_type} has syntax errors and needs to be corrected.
 
 RULES:
@@ -433,17 +507,39 @@ def generate_diagram(context, diagram_type):
         
         model = get_gemini_model()
         
-        prompt = f"""
+        # Special prompt for use case diagrams
+        if diagram_type == "Use Case Diagram":
+            prompt = f"""
+You are an expert software architecture assistant.
+
+Based on the following project codebase context, generate a **Use Case Diagram** using **Mermaid.js graph syntax** ONLY.
+Do not generate explanations. Just output the diagram inside triple backticks with `mermaid` syntax.
+
+SPECIAL INSTRUCTIONS FOR USE CASE DIAGRAM:
+- Since Mermaid doesn't support traditional UML use case diagrams, simulate them with flowchart syntax
+- Use the following conventions:
+  - Represent ACTORS with ((Actor)) circular nodes
+  - Represent USE CASES with [Use Case] rectangular nodes
+  - Use subgraphs to group related components
+  - Connect actors to use cases with --> arrows
+  - Add clear labels for relationships
+- Focus on user interactions, features, and system boundaries
+
+Here is the codebase context:
+{context[:8000]}
+"""
+        else:
+            # Regular prompt for other diagram types
+            prompt = f"""
 You are an expert software architecture assistant.
 
 Based on the following project codebase context, generate a **{diagram_type}** using **Mermaid.js** syntax ONLY.
 Do not generate explanations. Just output the diagram inside triple backticks with `mermaid` syntax.
 
-- Use Mermaid's proper syntax like `classDiagram`, `sequenceDiagram`, `erDiagram`, or `graph TD`.
+- Use Mermaid's proper syntax like `classDiagram`, `sequenceDiagram`, `erDiagram`, or `graph`.
 - Prefer full class names and indicate relationships clearly.
 - Avoid over-compacting or omitting important nodes.
 - If a class/function is only partially present, infer logical structure if needed.
-- If it's a Use Case Diagram, use Mermaid's flowchart syntax to simulate it.
 
 Here is the codebase context:
 {context[:8000]}
@@ -476,6 +572,14 @@ def generate_diagrams(
 
         # 1️⃣ Determine which diagrams to produce
         diagram_types = get_diagrams_for_role(role, requested_diagrams)
+
+        # Double-check for duplicates and log for debugging
+        if len(diagram_types) != len(set(diagram_types)):
+            print("⚠️ Warning: Duplicates found in diagram_types, removing...")
+            # Remove duplicates while preserving order
+            seen = set()
+            diagram_types = [x for x in diagram_types if not (x in seen or seen.add(x))]
+        
         print(f"📊 Will generate diagrams: {diagram_types}")
 
         # 2️⃣ Clone + load code
