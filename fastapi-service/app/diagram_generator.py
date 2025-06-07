@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-os.environ['GEMINI_API_KEY'] = "AIzaSyBMB3SQxsuZN07lRLE-sqwn-i2Nw1fJI-0"  # Replace with your actual API key
+os.environ['GEMINI_API_KEY'] = "Your_API_Key"  # Replace with your actual API key
 
 # --- Diagram role mapping ---
 role_to_diagrams = {
