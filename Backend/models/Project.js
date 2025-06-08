@@ -8,7 +8,7 @@ const ProjectSchema = new mongoose.Schema({
   },
   role: { 
     type: String, 
-    enum: ['Backend', 'Frontend', 'AI Engineer', 'Product Manager', 'Normal'], 
+    enum: ['Backend', 'Frontend', 'AI_Engineer', 'Product_Manager', 'Normal'], 
     required: true 
   },
   githubUrl: { 

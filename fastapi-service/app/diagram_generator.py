@@ -13,7 +13,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-os.environ['GEMINI_API_KEY'] = "AIzaSyBMB3SQxsuZN07lRLE-sqwn-i2Nw1fJI-0"  # Replace with your actual API key
+# ───────────────────────────────────────────────────────────
+# CONFIG / CONSTANTS
+# ───────────────────────────────────────────────────────────
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise RuntimeError(
+        "GEMINI_API_KEY is not set. "
+        "Add it to your .env or export it in the shell."
+    )
+# ───────────────────────────────────────────────────────────
+
+# os.environ['GEMINI_API_KEY'] = "AIzaSyBMB3SQxsuZN07lRLE-sqwn-i2Nw1fJI-0"  # Replace with your actual API key
 
 # --- Diagram role mapping ---
 role_to_diagrams = {

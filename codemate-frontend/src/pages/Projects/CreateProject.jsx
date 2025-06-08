@@ -7,8 +7,8 @@ import './CreateProject.css';
 const roleOptions = [
   'Backend',
   'Frontend',
-  'AI Engineer',
-  'Product Manager',
+  'AI_Engineer',
+  'Product_Manager',
   'Normal',
 ];
 

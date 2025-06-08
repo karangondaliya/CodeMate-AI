@@ -20,7 +20,7 @@ RAG-powered, role-aware GitHub repo summarizer (Groq LLM)
     summary (≤ 300 tokens output).
 """
 
-os.environ['GROQ_API_KEY'] = "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"
+# os.environ['GROQ_API_KEY'] = "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"
 
 # ================== CONFIG ==================
 GROQ_MODEL = "llama3-8b-8192"  # Options: llama3-8b-8192, mixtral-8x7b-32768, gemma-7b-it
@@ -29,6 +29,13 @@ MAX_CHUNKS   = 1200  # repo cap
 TOP_K        = 8     # retrieved chunks per role
 CHUNK_SUM_TOKENS = 120   # output tokens per mini‑summary
 FINAL_SUM_TOKENS = 300   # output tokens per role summary
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise RuntimeError(
+        "GROQ_API_KEY is not set. Add it to your .env or shell environment."
+    )
+# ───────────────────────────────────────────────────────────
 
 ROLE_PROMPTS = {
     "Backend Engineers":  "Provide an overview of server-side logic, API design, authentication, and data models.",
@@ -91,7 +98,7 @@ def retrieve(query: str, chunks, idx, k=TOP_K):
 def generate(prompt: str, max_tokens: int):
     try:
         client = openai.OpenAI(
-            api_key=os.environ['GROQ_API_KEY'],
+            api_key=GROQ_API_KEY,
             base_url="https://api.groq.com/openai/v1"
         )
         response = client.chat.completions.create(
