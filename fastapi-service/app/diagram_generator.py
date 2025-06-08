@@ -24,8 +24,6 @@ if not GEMINI_API_KEY:
     )
 # ───────────────────────────────────────────────────────────
 
-# os.environ['GEMINI_API_KEY'] = "AIzaSyBMB3SQxsuZN07lRLE-sqwn-i2Nw1fJI-0"  # Replace with your actual API key
-
 # --- Diagram role mapping ---
 role_to_diagrams = {
     "backend": ["Class Diagram", "Sequence Diagram", "ER Diagram"],
