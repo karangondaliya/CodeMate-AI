@@ -9,7 +9,6 @@ const roleOptions = [
   'Frontend',
   'AI_Engineer',
   'Product_Manager',
-  'Normal',
 ];
 
 const diagramOptions = [

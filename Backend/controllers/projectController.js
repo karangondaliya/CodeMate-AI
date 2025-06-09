@@ -28,7 +28,7 @@ exports.createProject = async (req, res) => {
     console.log('Making API calls to FastAPI...');
 
     const [summaryResponse, diagramResponse] = await Promise.all([
-      axios.post(summarizeUrl, { repo_url: githubUrl, branch }),
+      axios.post(summarizeUrl, { repo_url: githubUrl, branch, role }),
       axios.post(diagramUrl, { 
         repo_url: githubUrl, 
         branch, 
