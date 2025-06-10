@@ -64,7 +64,7 @@ ROLE_PROMPTS = {
     Highlight any AI/ML components and data-driven functionality.
     """,
     
-    "Product _Manager": """
+    "Product_Manager": """
     Analyze this codebase from a product management perspective. Focus on:
     - Overall product functionality and user-facing features
     - Business logic and value propositions
