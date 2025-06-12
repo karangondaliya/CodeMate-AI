@@ -22,8 +22,8 @@ exports.createProject = async (req, res) => {
     // Use all diagram types regardless of what was requested
     const allDiagrams = ALL_DIAGRAM_TYPES;
 
-    const summarizeUrl = 'http://localhost:8000/summarize';
-    const diagramUrl = 'http://localhost:8000/generate-diagrams';
+    const summarizeUrl = 'https://codemate-ai-krgx.onrender.com/summarize';
+    const diagramUrl = 'https://codemate-ai-krgx.onrender.com/generate-diagrams';
 
     console.log('Making API calls to FastAPI...');
 
