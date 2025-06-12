@@ -10,7 +10,10 @@ const app = express(); // 👈 After this line
 
 // ✅ Configure CORS here
 app.use(cors({
-  origin: 'http://localhost:3000', // Your React frontend
+  origin: [
+    'http://localhost:3000', 
+    'https://code-mate-ai-nine.vercel.app'
+  ], // Your React frontend
   credentials: true
 }));
 
