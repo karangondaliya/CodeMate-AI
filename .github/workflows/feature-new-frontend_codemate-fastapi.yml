@@ -44,8 +44,6 @@ jobs:
         with:
           name: python-app
           path: fastapi-service/release.zip
-            release.zip
-            !venv/
 
   deploy:
     runs-on: ubuntu-latest
