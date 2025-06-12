@@ -78,8 +78,8 @@ ROLE_PROMPTS = {
 }
 
 ROLE_QUERIES = {
-    "Backend ": "server api controller route database model schema authentication middleware service business logic backend",
-    "Frontend ": "react vue angular component jsx tsx html css ui frontend interface routing state management",
+    "Backend": "server api controller route database model schema authentication middleware service business logic backend",
+    "Frontend": "react vue angular component jsx tsx html css ui frontend interface routing state management",
     "AI_Engineer": "machine learning model training data science pytorch tensorflow sklearn preprocessing feature pipeline ml ai",
     "Product_Manager": "feature functionality user business workflow integration service product application main core"
 }
