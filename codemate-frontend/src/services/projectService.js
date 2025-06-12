@@ -2,7 +2,7 @@ import api from './api';
 
 export const createProject = async (projectData) => {
   try {
-    const response = await api.post('/project/add', projectData);
+    const response = await api.post(`/project/add`, projectData);
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
